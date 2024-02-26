@@ -1,0 +1,24 @@
+services:
+  worker:
+    build:
+      dockerfile: docker/Dockerfile
+      context: ../
+    container_name: celery
+    image: celery-img
+    command: "celery -A tasks worker -E -l INFO"
+    depends_on:
+      - redis
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+  redis:
+    image: 'redis:alpine'
+    container_name: redis
+
+networks:
+  default:
+    name: konan-local
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1200
