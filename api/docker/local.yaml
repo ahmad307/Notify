@@ -1,0 +1,41 @@
+services:
+  api:
+    build:
+      dockerfile: docker/Dockerfile
+      context: ../
+    container_name: api
+    image: api
+    command: "gunicorn -b 0.0.0.0:8000 -c api/gunicorn.py api.wsgi:application"
+    ports:
+      - 8000:8000
+    depends_on:
+      - redis
+      - worker
+    volumes:
+      - ../:/app
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+  worker:
+    build:
+      dockerfile: .././worker/docker/Dockerfile
+      context: ../../worker
+    image: 'worker:latest'
+    container_name: worker
+    environment:
+      - API_SVC_URL=http://api:8000
+
+
+  redis:
+    image: 'redis:alpine'
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+networks:
+  default:
+    name: local
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1200
